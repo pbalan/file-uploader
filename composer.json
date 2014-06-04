@@ -1,0 +1,20 @@
+{
+	"name" : "pbalan/file-uploader",
+	"description" : "FileUploader",
+	"license": "MIT",
+	"keywords" : ["FileUploader"],
+	"homepage" : "https://github.com/pbalan/file-uploader",
+	"authors" : [
+		{
+			"name" : "prashant"
+		}
+	],
+	"autoload" : {
+		"psr-0" : {"pbalan\\FileUploader" : "src/"}
+	 },
+	"require" : {
+		"php": ">=5.3.3",
+		"pbalan/directory-parser": "dev-master"
+	},
+	"minimum-stability": "dev"
+}
