@@ -10,7 +10,7 @@
 		private $no_of_files = 5;
 		private $uploadSize = 0;
 		private $allowedExts = array("gif", "jpeg", "jpg", "png");
-		private $mime_type = array('gif'=>array('image/gif'),'jpg'=>array('image/jpeg','image/jpg','image/pjpeg'),'jpeg'=>array('image/jpeg','image/jpg','image/pjpeg'),'png'=>array('image/image/png','image/x-png'));
+		private $mime_type = array('gif'=>array('image/gif'),'jpg'=>array('image/jpeg','image/jpg','image/pjpeg'),'jpeg'=>array('image/jpeg','image/jpg','image/pjpeg'),'png'=>array('image/png','image/x-png'));
 		private $debug = false;
 		
 		public function __construct($destination='', $allowedExts='', $no_of_files=4, $uploadSize=0)
@@ -83,7 +83,8 @@
 					echo $this->destination . "is not directory/folder";
 				}
 			}
-			if(substr($this->destination, (strlen($this->destination)-2))!='/' || substr($this->destination, (strlen($this->destination)-2))!='\\')
+            $this->destination = str_replace('\\','/',$this->destination);
+			if(substr($this->destination, (strlen($this->destination)-1))!='/')
 			{
 				$this->destination .= '/';
 			}
@@ -102,7 +103,12 @@
 					echo "No Files uploaded";
 				}
 				exit;
-			}
+			} else {
+                if(true===$this->debug)
+                {
+                    var_dump($files);
+                }
+            }
 			$tempMime = array();
 			foreach($this->allowedExts as $ext)
 			{
@@ -114,37 +120,43 @@
 			}
 			$this->mime_type = $tempMime;
 			
-			for($count=0; $count <= count($files); $count++){
-				if(false===empty($files["file"]["name"][$count]))
+			for($i=0; $i <= count($files["file"]["name"]); $i++)
+            {
+                if(true===$this->debug)
 				{
-					$temp = explode(".", $files["file"]["name"][$count]);
+                    echo "total: ".count($files["file"]["name"]);
+                    echo "counting: ".$i."<br/>";
+                }
+				if(false===empty($files["file"]["name"][$i]))
+				{
+					$temp = explode(".", $files["file"]["name"][$i]);
 					$extension = end($temp);
-					if (true===in_array($files["file"]["type"][$count],$this->mime_type) && true===$this->checkSize($files["file"]["size"][$count]) && true===in_array($extension, $this->allowedExts) )
+					if (true===in_array($files["file"]["type"][$i],$this->mime_type) && true===$this->checkSize($files["file"]["size"][$i]) && true===in_array($extension, $this->allowedExts) )
 					{
-						if ($files["file"]["error"][$count] > 0) {
+						if ($files["file"]["error"][$i] > 0) {
 							if(true===$this->debug)
 							{
-								echo "Return Code: " . $files["file"]["error"][$count] . "<br>";
+								echo "Return Code: " . $files["file"]["error"][$i] . "<br>";
 							}
 						} else {
 							if(true===$this->debug)
 							{
-								echo "Upload: " . $files["file"]["name"][$count] . "<br>";
-								echo "Type: " . $files["file"]["type"][$count] . "<br>";
-								echo "Size: " . ($files["file"]["size"][$count] / 1024) . " kB<br>";
-								echo "Temp file: " . $files["file"]["tmp_name"][$count] . "<br>";
+								echo "Upload: " . $files["file"]["name"][$i] . "<br>";
+								echo "Type: " . $files["file"]["type"][$i] . "<br>";
+								echo "Size: " . ($files["file"]["size"][$i] / 1024) . " kB<br>";
+								echo "Temp file: " . $files["file"]["tmp_name"][$i] . "<br>";
 							}
-							if(file_exists($this->destination . $files["file"]["name"][$count])) 
+							if(file_exists($this->destination . $files["file"]["name"][$i])) 
 							{
 								if(true===$this->debug)
 								{
-									echo $files["file"]["name"][$count] . " already exists. ";
+									echo $files["file"]["name"][$i] . " already exists. ";
 								}
 							} else {
-								move_uploaded_file($files["file"]["tmp_name"][$count], $this->destination . $files["file"]["name"][$count]);
+								move_uploaded_file($files["file"]["tmp_name"][$i], $this->destination . $files["file"]["name"][$i]);
 								if(true===$this->debug)
 								{
-									echo "Stored in: " . $this->destination . $files["file"]["name"][$count];
+									echo "Stored in: " . $this->destination . $files["file"]["name"][$i];
 								}
 							}
 						}
@@ -162,5 +174,183 @@
 				}
 			}
 		}
+        
+        public function getImageDimesions($filename)
+        {
+            $dimensions = array('width' => 0, 'height' => 0);
+            if(false===empty($filename))
+            {
+                list($width, $height) = getimagesize($filename);
+                $dimensions = array('width' => $width, 'height' => $height);
+            }
+            return $dimensions;
+        }
+        
+        public function checkImageDimension(array $dimensions=array(), $set_width, $set_height)
+        {
+            if(isset($dimensions['width']))
+            {
+                $width = $dimensions['width'];
+            } else {
+                $width = 0;
+            }
+            
+            if(isset($dimensions['height']))
+            {
+                $height = $dimensions['height'];
+            } else {
+                $height = 0;
+            }
+            
+            if($set_width===$width && $set_height===$height)
+            {
+                return true;
+            } else {
+                return false;
+            }
+        }
+        public function checkDirectoryFlow($dir='')
+		{
+            if(false===empty($dir))
+            {
+                $dir = str_replace('\\','/',$dir);
+                if(substr($dir, (strlen($dir)-1))!='/')
+                {
+                    $dir .= '/';
+                }
+                return $dir;
+            } else {
+                $this->dir = str_replace('\\','/',$this->dir);
+                if(substr($this->dir, (strlen($this->dir)-1))!='/')
+                {
+                    $this->dir .= '/';
+                }
+                return true;
+            }
+		}
+        public function generateThumb($filename, $thumb_width, $thumb_height, $crop=false, $thumbDir='', $thumbFile='')
+        {
+            if(false===empty($thumbFile) && false===empty($thumbDir))
+            {
+                $thumbDir = $this->checkDirectoryFlow($thumbDir);
+                $thumbFile = $thumbDir.$thumbFile;                
+            }
+            else if(false===empty($thumbFile) && true===empty($thumbDir))
+            {
+                $thumbDir = $this->checkDirectoryFlow(dirname($filename));
+                $thumbFile =  $thumbDir.$thumbFile;
+            }
+            else if(true===empty($thumbFile) && false===empty($thumbDir))
+            {
+                $thumbDir = $this->checkDirectoryFlow($thumbDir);
+                $thumbFile =  $thumbDir.basename($filename);
+            }
+            else if(true===empty($thumbFile) && true===empty($thumbDir))
+            {
+                $thumbDir = $this->checkDirectoryFlow(dirname($filename));
+                $thumbFile = $thumbDir.basename($filename);
+            }
+            
+            if($crop===true)
+            {
+                if(0!=$thumb_width && 0!=$thumb_height)
+                {
+                    $this->cropImage($filename, $thumb_width, $thumb_height, $thumbFile);
+                }
+            }
+            else
+            {
+                if(0!=$thumb_width && 0!=$thumb_height)
+                {
+                    $this->resizeImage($filename, $thumb_width, $thumb_height, $filename);
+                }
+            }
+        }
+        
+        public function cropImage($imgSrc, $cropWidth='', $cropHeight='', $filename='')
+        {
+            $dimensions = $this->getImageDimesions($imgSrc);
+            $width=  $dimensions['width'];
+            $height=  $dimensions['height'];
+            $imageType = image_type_to_mime_type(exif_imagetype($imgSrc));
+            if(true===empty($cropWidth) && true===empty($cropHeight))
+            {
+                ///--------------------------------------------------------
+                //setting the crop size
+                //--------------------------------------------------------
+                if($width > $height) $biggestSide = $width;
+                else $biggestSide = $height;
+                
+                //The crop size will be half that of the largest side
+                $cropPercent = .5;
+                $cropWidth   = $biggestSide*$cropPercent;
+                $cropHeight  = $biggestSide*$cropPercent;
+            }
+            $myImage = $this->createImage($imageType, $imgSrc);
+            //getting the top left coordinate
+            $c1 = array("x"=>($width-$cropWidth)/2, "y"=>($height-$cropHeight)/2);
+            //--------------------------------------------------------
+            // Creating the thumbnail
+            //--------------------------------------------------------
+            $thumb = imagecreatetruecolor($cropWidth, $cropHeight);
+            imagecopyresampled($thumb, $myImage, 0, 0, $c1['x'], $c1['y'], $cropWidth, $cropHeight, $cropWidth, $cropHeight);
+            $this->saveImage($imageType, $thumb, $filename);
+        }
+        
+        public function resizeImage($imgSrc, $cropWidth='', $cropHeight='', $filename='')
+        {
+            $dimensions = $this->getImageDimesions($imgSrc);
+            $width=  $dimensions['width'];
+            $height=  $dimensions['height'];
+            $imageType = image_type_to_mime_type(exif_imagetype($imgSrc));
+            if(true===empty($cropWidth) && true===empty($cropHeight))
+            {
+                ///--------------------------------------------------------
+                //setting the crop size
+                //--------------------------------------------------------
+                if($width > $height) $biggestSide = $width;
+                else $biggestSide = $height;
+                
+                //The crop size will be half that of the largest side
+                $cropPercent = .5;
+                $cropWidth   = $biggestSide*$cropPercent;
+                $cropHeight  = $biggestSide*$cropPercent;
+            }
+            $myImage = $this->createImage($imageType, $imgSrc);
+            
+            //--------------------------------------------------------
+            // Creating the thumbnail
+            //--------------------------------------------------------
+            
+            $thumb = imagecreatetruecolor($cropWidth, $cropHeight);
+            imagecopyresized($thumb, $myImage, 0, 0, 0, 0, $cropWidth, $cropHeight, $width, $height);
+            $this->saveImage($imageType, $thumb, $filename);
+        }
+        
+        private function createImage($imageType, $imgSrc)
+        {
+            //saving the image into memory (for manipulation with GD Library)
+            switch($imageType)
+            {
+                case 'image/jpeg' : $myImage = imagecreatefromjpeg($imgSrc); break;
+                case 'image/gif'  : $myImage = imagecreatefromgif($imgSrc); break;
+                case 'image/png'  : $myImage = imagecreatefrompng($imgSrc); break;
+                case 'image/bmp'  : $myImage = imagecreatefromwbmp($imgSrc); break;
+            }
+            
+            return $myImage;
+        }
+        
+        private function saveImage($imageType, $thumb, $filename)
+        {
+            switch($imageType)
+            {
+                case 'image/jpeg' : imagejpeg($thumb, $filename); break;
+                case 'image/gif'  : imagegif($filename); break;
+                case 'image/png'  : imagepng($filename); break;
+                case 'image/bmp'  : imagewbmp($filename); break;
+            }
+            
+        }
 	}
 ?>
