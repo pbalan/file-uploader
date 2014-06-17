@@ -178,7 +178,7 @@
         public function getImageDimesions($filename)
         {
             $dimensions = array('width' => 0, 'height' => 0);
-            if(false===empty($filename))
+            if(false===empty($filename) && true===file_exists($filename))
             {
                 if(list($width, $height) = @getimagesize($filename))
                 {
@@ -255,14 +255,14 @@
             
             if($crop===true)
             {
-                if(0!=$thumb_width && 0!=$thumb_height)
+                if(0!=$thumb_width && 0!=$thumb_height && true===file_exists($filename))
                 {
                     $this->cropImage($filename, $thumb_width, $thumb_height, $thumbFile);
                 }
             }
             else
             {
-                if(0!=$thumb_width && 0!=$thumb_height)
+                if(0!=$thumb_width && 0!=$thumb_height && true===file_exists($filename))
                 {
                     $this->resizeImage($filename, $thumb_width, $thumb_height, $filename);
                 }
@@ -336,28 +336,30 @@
         private function createImage($imageType, $imgSrc)
         {
             $myImage = '';
-            //saving the image into memory (for manipulation with GD Library)
-            switch($imageType)
-            {
-                case 'image/jpeg' : $myImage = imagecreatefromjpeg($imgSrc); break;
-                case 'image/gif'  : $myImage = imagecreatefromgif($imgSrc); break;
-                case 'image/png'  : $myImage = imagecreatefrompng($imgSrc); break;
-                case 'image/bmp'  : $myImage = imagecreatefromwbmp($imgSrc); break;
+            if(true===is_resource($imgSrc)){
+                //saving the image into memory (for manipulation with GD Library)
+                switch($imageType)
+                {
+                    case 'image/jpeg' : $myImage = imagecreatefromjpeg($imgSrc); break;
+                    case 'image/gif'  : $myImage = imagecreatefromgif($imgSrc); break;
+                    case 'image/png'  : $myImage = imagecreatefrompng($imgSrc); break;
+                    case 'image/bmp'  : $myImage = imagecreatefromwbmp($imgSrc); break;
+                }
             }
-            
             return $myImage;
         }
         
         private function saveImage($imageType, $thumb, $filename)
         {
-            switch($imageType)
-            {
-                case 'image/jpeg' : imagejpeg($thumb, $filename); break;
-                case 'image/gif'  : imagegif($filename); break;
-                case 'image/png'  : imagepng($filename); break;
-                case 'image/bmp'  : imagewbmp($filename); break;
+            if(true===is_resource($filename)){
+                switch($imageType)
+                {
+                    case 'image/jpeg' : imagejpeg($thumb, $filename); break;
+                    case 'image/gif'  : imagegif($thumb, $filename); break;
+                    case 'image/png'  : imagepng($thumb, $filename); break;
+                    case 'image/bmp'  : imagewbmp($thumb, $filename); break;
+                }
             }
-            
         }
 	}
 ?>
