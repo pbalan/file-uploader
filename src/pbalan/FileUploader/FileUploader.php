@@ -304,7 +304,9 @@
             $dimensions = $this->getImageDimesions($imgSrc);
             $width=  $dimensions['width'];
             $height=  $dimensions['height'];
-            $imageType = image_type_to_mime_type(exif_imagetype($imgSrc));
+            if(file_exists($imgSrc) && exif_imagetype($imgSrc)){
+                $imageType = image_type_to_mime_type(exif_imagetype($imgSrc));
+            }
             if(true===empty($cropWidth) && true===empty($cropHeight))
             {
                 ///--------------------------------------------------------
@@ -325,12 +327,15 @@
             //--------------------------------------------------------
             
             $thumb = imagecreatetruecolor($cropWidth, $cropHeight);
-            imagecopyresized($thumb, $myImage, 0, 0, 0, 0, $cropWidth, $cropHeight, $width, $height);
+            if(is_resource($myImage)){
+                imagecopyresized($thumb, $myImage, 0, 0, 0, 0, $cropWidth, $cropHeight, $width, $height);
+            }
             $this->saveImage($imageType, $thumb, $filename);
         }
         
         private function createImage($imageType, $imgSrc)
         {
+            $myImage = '';
             //saving the image into memory (for manipulation with GD Library)
             switch($imageType)
             {
