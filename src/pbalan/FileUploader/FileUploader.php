@@ -180,8 +180,10 @@
             $dimensions = array('width' => 0, 'height' => 0);
             if(false===empty($filename))
             {
-                list($width, $height) = getimagesize($filename);
-                $dimensions = array('width' => $width, 'height' => $height);
+                if(list($width, $height) = @getimagesize($filename))
+                {
+                    $dimensions = array('width' => $width, 'height' => $height);
+                }
             }
             return $dimensions;
         }
