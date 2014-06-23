@@ -32,7 +32,11 @@
 				$this->uploadSize = $uploadSize;
 			}
 		}
-		
+		public function setMimeType($mime_type=array()){
+            if(false===empty($mime_type)){
+                $this->mime_type = array_merge($this->mime_type,$mime_type);
+            }
+        }
 		public function uploadForm($no_of_files=4)
 		{
 			if(false===empty($no_of_files) && true===is_numeric($no_of_files))
