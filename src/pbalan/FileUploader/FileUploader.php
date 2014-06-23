@@ -66,7 +66,7 @@
 			return $flag;
 		}
 		
-		public function uploadPictures($files, $allowedExts='', $destination='', $debug=false, $uploadSize=0)
+		public function uploadPictures($files, $allowedExts='', $destination='', $debug=false, $uploadSize=0, $forceFileName='')
 		{
 			if(false===empty($allowedExts) && true===is_array($allowedExts))
 			{
@@ -146,14 +146,23 @@
 								echo "Size: " . ($files["file"]["size"][$i] / 1024) . " kB<br>";
 								echo "Temp file: " . $files["file"]["tmp_name"][$i] . "<br>";
 							}
-							if(file_exists($this->destination . $files["file"]["name"][$i])) 
+							if(file_exists($this->destination . $files["file"]["name"][$i]) && true===empty($forceFileName)) 
 							{
 								if(true===$this->debug)
 								{
 									echo $files["file"]["name"][$i] . " already exists. ";
 								}
-							} else {
-								move_uploaded_file($files["file"]["tmp_name"][$i], $this->destination . $files["file"]["name"][$i]);
+							} else if(false===empty($forceFileName) && file_exists($this->destination . $forceFileName)){
+                                if(true===$this->debug)
+								{
+									echo "forceFileName: ".$forceFileName. " already exists. ";
+								}
+                            } else {
+                                if(false===empty($forceFileName) && $i==0 && count($files)===1){
+                                    move_uploaded_file($files["file"]["tmp_name"][$i], $this->destination . $forceFileName);
+                                } else {
+                                    move_uploaded_file($files["file"]["tmp_name"][$i], $this->destination . $files["file"]["name"][$i]);
+                                }
 								if(true===$this->debug)
 								{
 									echo "Stored in: " . $this->destination . $files["file"]["name"][$i];
